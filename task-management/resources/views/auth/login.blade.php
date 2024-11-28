@@ -37,21 +37,52 @@
         </div>
     </div>
 </nav>
-<div class="max-w-md mx-auto mt-10 bg-white p-6 rounded shadow">
-    <h1 class="text-2xl font-bold mb-6">Connexion</h1>
-    <form method="POST" action="{{ route('login.submit') }}">
-        @csrf
-        <div class="mb-4">
-            <label for="email" class="block text-gray-700">Email</label>
-            <input id="email" type="email" name="email" class="w-full border rounded p-2" required>
+<x-guest-layout>
+    <div class="max-w-md mx-auto mt-10 bg-white p-6 rounded shadow">
+        <h1 class="text-2xl font-bold mb-6">Connexion</h1>
+        <form method="POST" action="{{ route('login') }}">
+            @csrf
+
+            <!-- Email -->
+            <div class="mb-4">
+                <label for="email" class="block text-gray-700">Email</label>
+                <input id="email" type="email" name="email" value="{{ old('email') }}"
+                       class="w-full border rounded p-2 @error('email') border-red-500 @enderror" required>
+                @error('email')
+                <span class="text-red-500 text-sm">{{ $message }}</span>
+                @enderror
+            </div>
+
+            <!-- Mot de passe -->
+            <div class="mb-4">
+                <label for="password" class="block text-gray-700">Mot de passe</label>
+                <input id="password" type="password" name="password"
+                       class="w-full border rounded p-2 @error('password') border-red-500 @enderror" required>
+                @error('password')
+                <span class="text-red-500 text-sm">{{ $message }}</span>
+                @enderror
+            </div>
+
+            <!-- Checkbox : Se souvenir de moi -->
+            <div class="mb-4 flex items-center">
+                <input id="remember_me" type="checkbox" name="remember"
+                       class="mr-2">
+                <label for="remember_me" class="text-gray-700">Se souvenir de moi</label>
+            </div>
+
+            <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded">Se connecter</button>
+        </form>
+
+        <!-- Lien mot de passe oublié -->
+        <div class="mt-4 text-center">
+        <a href="{{ route('password.request') }}" class="text-blue-500 hover:underline">
+    Mot de passe oublié ?
+</a>
+
         </div>
-        <div class="mb-4">
-            <label for="password" class="block text-gray-700">Mot de passe</label>
-            <input id="password" type="password" name="password" class="w-full border rounded p-2" required>
-        </div>
-        <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded">Se connecter</button>
-    </form>
-</div>
+    </div>
+</x-guest-layout>
+
 
 
 <!-- Footer -->

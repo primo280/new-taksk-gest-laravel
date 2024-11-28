@@ -1,35 +1,33 @@
 <?php
-// app/Http/Controllers/TaskController.php
+
 namespace App\Http\Controllers;
 
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // Ajouter cette ligne pour utiliser Auth
 
 class TaskController extends Controller
 {
     public function create()
     {
-        // Passer la liste des utilisateurs au formulaire
         $users = User::all();
         return view('tasks.create', compact('users'));
     }
 
     public function store(Request $request)
     {
-        // Validation des données
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'assigned_to' => 'nullable|exists:users,id', // Assurez-vous que l'ID de l'utilisateur existe
+            'assigned_to' => 'nullable|exists:users,id',
         ]);
 
-        // Créer la tâche
         Task::create([
             'title' => $request->title,
             'description' => $request->description,
             'assigned_to' => $request->assigned_to,
-            'user_id' => auth()->id(), // L'utilisateur qui crée la tâche
+            'user_id' => auth()->id(), // L'utilisateur connecté
         ]);
 
         return redirect()->route('tasks.index')->with('success', 'Tâche créée avec succès!');
@@ -38,19 +36,21 @@ class TaskController extends Controller
     public function edit(Task $task)
     {
         $users = User::all();
+        if ($task->user_id !== auth()->id()) {
+            abort(403);
+        }
+
         return view('tasks.edit', compact('task', 'users'));
     }
 
     public function update(Request $request, Task $task)
     {
-        // Validation des données
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'assigned_to' => 'nullable|exists:users,id', // Assurez-vous que l'ID de l'utilisateur existe
+            'assigned_to' => 'nullable|exists:users,id',
         ]);
 
-        // Mise à jour de la tâche
         $task->update([
             'title' => $request->title,
             'description' => $request->description,
@@ -58,10 +58,10 @@ class TaskController extends Controller
         ]);
 
         return redirect()->route('tasks.index')->with('success', 'Tâche mise à jour avec succès!');
-    }// Supprimer une tâche
+    }
+
     public function destroy(Task $task)
     {
-        // Vérifier si la tâche appartient à l'utilisateur connecté
         if ($task->user_id !== auth()->id()) {
             return redirect()->route('tasks.index')->with('error', 'Vous n\'avez pas accès à cette tâche.');
         }
@@ -70,48 +70,44 @@ class TaskController extends Controller
 
         return redirect()->route('tasks.index')->with('success', 'Tâche supprimée avec succès!');
     }
-      // Marquer une tâche comme terminée ou non terminée
-      public function toggleCompletion(Task $task)
-      {
-          // Vérifier si la tâche appartient à l'utilisateur connecté
-          if ($task->user_id !== auth()->id()) {
-              return redirect()->route('tasks.index')->with('error', 'Vous n\'avez pas accès à cette tâche.');
-          }
-  
-          $task->completed = !$task->completed;  // Inverse le statut de la tâche
-          $task->save();
-  
-          return redirect()->route('tasks.index')->with('success', 'Statut de la tâche mis à jour!');
-      }
+
+    public function toggleCompletion(Task $task)
+    {
+        if ($task->user_id !== auth()->id()) {
+            return redirect()->route('tasks.index')->with('error', 'Vous n\'avez pas accès à cette tâche.');
+        }
+
+        $task->completed = !$task->completed;
+        $task->save();
+
+        return redirect()->route('tasks.index')->with('success', 'Statut de la tâche mis à jour!');
+    }
+
     // app/Http/Controllers/TaskController.php
-  // app/Http/Controllers/TaskController.php
+
 public function index()
 {
-    $tasks = Task::with('assignedUser')->get(); // Inclure l'utilisateur assigné
-    $users = User::all(); // Tous les utilisateurs pour le formulaire d'assignation
+    // Récupérer les tâches créées par l'utilisateur connecté
+    $tasks = auth()->user()->tasks; // L'utilisateur connecté est celui qui a créé les tâches
+    $users = User::all(); // On récupère tous les utilisateurs pour pouvoir les assigner à une tâche
+
     return view('tasks.index', compact('tasks', 'users'));
 }
 
 
-    
+    public function assign(Request $request, Task $task)
+    {
+        $request->validate([
+            'assigned_user_id' => 'required|exists:users,id',
+        ]);
 
-public function assign(Request $request, Task $task)
-{
-    // Validation de l'utilisateur assigné
-    $request->validate([
-        'assigned_user_id' => 'required|exists:users,id', // Vérifie que l'utilisateur existe
-    ]);
+        if ($task->user_id !== auth()->id()) {
+            return redirect()->route('tasks.index')->with('error', 'Vous n\'avez pas accès à cette tâche.');
+        }
 
-    // Vérifier que la tâche appartient à l'utilisateur connecté (facultatif)
-    if ($task->user_id !== auth()->id()) {
-        return redirect()->route('tasks.index')->with('error', 'Vous n\'avez pas accès à cette tâche.');
+        $task->assigned_user_id = $request->assigned_user_id;
+        $task->save();
+
+        return redirect()->route('tasks.index')->with('success', 'Tâche assignée avec succès!');
     }
-
-    // Mettre à jour l'utilisateur assigné
-    $task->assigned_user_id = $request->assigned_user_id;
-    $task->save();
-
-    return redirect()->route('tasks.index')->with('success', 'Tâche assignée avec succès!');
-}
-
 }

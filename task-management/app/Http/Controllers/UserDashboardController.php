@@ -7,17 +7,18 @@ use Illuminate\Http\Request;
 class UserDashboardController extends Controller
 {
     public function index()
-    {
-        $tasks = auth()->user()->tasks()->get(); // Si vous avez configuré une relation User-Task
-        return view('dashboard', compact('tasks'));
-    }
-    public function stats()
 {
-    $tasks = auth()->user()->tasks;
-    $inProgress = $tasks->where('status', 'in_progress')->count();
-    $completed = $tasks->where('status', 'completed')->count();
+    // Récupérer toutes les tâches de l'utilisateur connecté
+    $tasks = auth()->user()->tasks()->get();
 
-    return view('dashboard.stats', compact('inProgress', 'completed'));
+    // Calculer les statistiques sur la base du champ 'completed'
+    $inProgress = $tasks->where('completed', false)->count(); // Tâches en cours (non terminées)
+    $completed = $tasks->where('completed', true)->count(); // Tâches terminées
+
+    // Passer les données à la vue
+    return view('dashboard', compact('tasks', 'inProgress', 'completed'));
 }
+
+
 
 }

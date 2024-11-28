@@ -7,6 +7,9 @@ use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\HomeController;  // Importer le contrôleur
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\NewPasswordController;
 // routes/web.php
 
 // routes/web.php
@@ -40,6 +43,15 @@ Route::post('/', [AuthController::class, 'register'])->name('register.submit');
 
 // Authentifier un utilisateur
 Route::post('/connexion', [AuthController::class, 'login'])->name('login.submit');
+Route::middleware('guest')->group(function () {
+    // Login
+    Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
+    Route::post('login', [AuthenticatedSessionController::class, 'store']);
+    Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
+    Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
+    Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
+    Route::post('reset-password', [NewPasswordController::class, 'store'])->name('password.update');
+});
 
 // Déconnexion de l'utilisateur
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
